@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Sözle — слово дня</title>
+<style>
+  :root{
+    --cream:#F2E8D2;
+    --ink:#2A1810;
+    --maroon:#7A2130;
+    --maroon-dark:#5A1622;
+    --gold:#C9A24B;
+    --teal:#1F6F64;
+    --absent:#D8CDB6;
+    --tile-border:#C9B98F;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--cream);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    min-height:100vh; overscroll-behavior:none;}
+
+  .bg-motif{
+    position:fixed; inset:0; pointer-events:none; opacity:0.06; z-index:0;
+    background-image:
+      radial-gradient(circle at 20% 20%, var(--maroon) 0 3px, transparent 4px),
+      radial-gradient(circle at 80% 30%, var(--teal) 0 3px, transparent 4px),
+      radial-gradient(circle at 40% 80%, var(--gold) 0 3px, transparent 4px),
+      radial-gradient(circle at 90% 85%, var(--maroon) 0 3px, transparent 4px);
+    background-size: 140px 140px;
+  }
+
+  .wrap{position:relative; z-index:1; max-width:480px; margin:0 auto; padding:14px 14px 28px;
+    display:flex; flex-direction:column; min-height:100vh;}
+
+  header{display:flex; align-items:center; justify-content:space-between; padding:6px 2px 2px;}
+  .title-block{display:flex; flex-direction:column;}
+  h1{font-family:Georgia,'Times New Roman',serif; font-weight:700; font-size:28px;
+     margin:0; letter-spacing:0.5px; color:var(--maroon-dark);}
+  .subtitle{font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--teal); margin-top:2px;}
+
+  .header-right{display:flex; align-items:center; gap:8px;}
+  .help-btn{width:32px; height:32px; border-radius:50%; border:1.5px solid var(--maroon);
+    background:#fff; color:var(--maroon); font-weight:800; font-size:15px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-family:Georgia,serif; flex-shrink:0;}
+  .lang-toggle{display:flex; background:#fff; border:1px solid var(--tile-border); border-radius:999px; overflow:hidden;}
+  .lang-toggle button{border:none; background:transparent; padding:7px 14px; font-size:13px; font-weight:700;
+    color:var(--ink); cursor:pointer; font-family:inherit;}
+  .lang-toggle button.active{background:var(--maroon); color:#fff;}
+
+  /* Правила */
+  .rules-example{display:flex; gap:5px; justify-content:center; margin:10px 0;}
+  .rules-tile{width:34px; height:34px; border-radius:6px; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:16px; font-family:Georgia,serif; text-transform:uppercase; color:#fff;}
+  .rules-row{display:flex; align-items:center; gap:10px; margin:12px 0; text-align:left;}
+  .rules-row .swatch{width:26px; height:26px; border-radius:6px; flex-shrink:0;}
+  .rules-row p{margin:0; font-size:13px; line-height:1.4;}
+  .rules-list{text-align:left; margin-top:4px;}
+
+  .gul-divider{height:14px; margin:10px 0 4px; opacity:0.9;
+    background-image: conic-gradient(from 0deg, var(--gold) 0deg 20deg, transparent 20deg 40deg);
+    background-size: 14px 14px; background-repeat: repeat-x; background-position:center;
+    mask-image: linear-gradient(90deg, transparent, black 15%, black 85%, transparent);}
+
+  .status{min-height:22px; text-align:center; font-size:13px; font-weight:600; color:var(--maroon-dark); margin-bottom:6px;}
+
+  .board{display:flex; flex-direction:column; gap:6px; align-items:center; margin:6px auto 14px;}
+  .row{display:flex; gap:6px;}
+  .tile{width:52px; height:52px; border:2px solid var(--tile-border); border-radius:8px;
+    display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800;
+    font-family:Georgia,serif; background:#fff; color:var(--ink); text-transform:uppercase;
+    transition:transform 0.15s ease;}
+  .tile.filled{border-color:#a99a6f; transform:scale(1.03);}
+  .tile.correct{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .tile.present{background:var(--gold); border-color:var(--gold); color:#3a2a05;}
+  .tile.absent{background:var(--absent); border-color:var(--absent); color:#7a705a;}
+  .tile.flip{animation:flip 0.5s ease;}
+  @keyframes flip{
+    0%{transform:rotateX(0deg);}
+    50%{transform:rotateX(90deg);}
+    100%{transform:rotateX(0deg);}
+  }
+  .row.shake{animation:shake 0.4s ease;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-6px);}
+    40%{transform:translateX(6px);}
+    60%{transform:translateX(-4px);}
+    80%{transform:translateX(4px);}
+  }
+
+  .keyboard{display:flex; flex-direction:column; gap:6px; align-items:center; margin-top:auto;}
+  .krow{display:flex; gap:4px; justify-content:center; width:100%;}
+  .key{flex:1; max-width:32px; height:44px; border-radius:6px; border:none; background:#fff;
+    border:1px solid var(--tile-border); font-size:13px; font-weight:700; color:var(--ink);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-family:inherit;}
+  .key.wide{max-width:60px; font-size:11px;}
+  .key.correct{background:var(--teal); color:#fff; border-color:var(--teal);}
+  .key.present{background:var(--gold); color:#3a2a05; border-color:var(--gold);}
+  .key.absent{background:var(--absent); color:#a89b7d; border-color:var(--absent);}
+
+  .sponsor{margin-top:14px; border-radius:var(--radius); border:1.5px solid var(--gold);
+    background:linear-gradient(135deg,#fff,#faf3e0); padding:10px 12px; display:flex;
+    align-items:center; gap:10px;}
+  .sponsor .badge{font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#a08a3f;
+    border:1px solid var(--gold); border-radius:4px; padding:2px 5px; flex-shrink:0;}
+  .sponsor .txt{font-size:12.5px; line-height:1.3;}
+  .sponsor .txt b{color:var(--maroon-dark);}
+
+  .modal-bg{position:fixed; inset:0; background:rgba(42,24,16,0.55); z-index:5;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    opacity:0; pointer-events:none; transition:opacity 0.25s ease;}
+  .modal-bg.show{opacity:1; pointer-events:auto;}
+  .modal{background:var(--cream); border-radius:16px; padding:22px 20px; max-width:340px; width:100%;
+    border:2px solid var(--gold); text-align:center;}
+  .modal h2{margin:0 0 6px; font-family:Georgia,serif; color:var(--maroon-dark); font-size:22px;}
+  .modal p{font-size:14px; margin:6px 0; color:var(--ink);}
+  .stats-row{display:flex; justify-content:space-around; margin:16px 0;}
+  .stat{display:flex; flex-direction:column; align-items:center;}
+  .stat .num{font-size:24px; font-weight:800; color:var(--maroon-dark);}
+  .stat .lbl{font-size:10px; text-transform:uppercase; color:var(--teal); letter-spacing:0.5px; margin-top:2px;}
+  .modal-buttons{display:flex; gap:8px; margin-top:10px;}
+  .modal-buttons button{flex:1; padding:11px; border-radius:8px; border:none; font-weight:700;
+    font-size:13px; cursor:pointer; font-family:inherit;}
+  .btn-share{background:var(--maroon); color:#fff;}
+  .btn-close{background:transparent; color:var(--maroon-dark); border:1.5px solid var(--maroon) !important;}
+  .note{font-size:10px; color:#a08a3f; margin-top:10px; line-height:1.4;}
+</style>
+</head>
+<body>
+
+<div class="bg-motif"></div>
+<div class="wrap">
+  <header>
+    <div class="title-block">
+      <h1 id="gameTitle">Sözle</h1>
+      <div class="subtitle" id="subtitle">Слово дня</div>
+    </div>
+    <div class="header-right">
+      <button class="help-btn" id="btnHelp" aria-label="Правила">?</button>
+      <div class="lang-toggle">
+        <button id="btnRu" class="active">RU</button>
+        <button id="btnTm">TM</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="gul-divider"></div>
+
+  <div class="status" id="status"></div>
+  <div class="board" id="board"></div>
+
+  <div class="keyboard" id="keyboard"></div>
+
+  <div class="sponsor">
+    <div class="badge">Реклама</div>
+    <div class="txt"><b>Ваш бизнес — здесь.</b> Место под баннер спонсора дня. Пишите @Yusupmur.</div>
+  </div>
+</div>
+
+<div class="modal-bg" id="rulesBg">
+  <div class="modal">
+    <h2 id="rulesTitle">Как играть</h2>
+    <p id="rulesIntro">Угадайте слово дня за 6 попыток. Каждая попытка — слово из 5 букв.</p>
+
+    <div class="rules-example">
+      <div class="rules-tile" style="background:var(--teal)" id="rEx1">Т</div>
+      <div class="rules-tile" style="background:var(--absent); color:#7a705a" id="rEx2">Е</div>
+      <div class="rules-tile" style="background:var(--gold); color:#3a2a05" id="rEx3">А</div>
+      <div class="rules-tile" style="background:var(--absent); color:#7a705a" id="rEx4">Т</div>
+      <div class="rules-tile" style="background:var(--absent); color:#7a705a" id="rEx5">Р</div>
+    </div>
+
+    <div class="rules-list">
+      <div class="rules-row">
+        <div class="swatch" style="background:var(--teal)"></div>
+        <p id="rDescCorrect">Буква на своём месте</p>
+      </div>
+      <div class="rules-row">
+        <div class="swatch" style="background:var(--gold)"></div>
+        <p id="rDescPresent">Буква есть в слове, но на другом месте</p>
+      </div>
+      <div class="rules-row">
+        <div class="swatch" style="background:var(--absent)"></div>
+        <p id="rDescAbsent">Такой буквы в слове нет</p>
+      </div>
+    </div>
+
+    <div class="modal-buttons">
+      <button class="btn-share" id="btnStartPlay" style="flex:1">Понятно, играть</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">🎉 Верно!</h2>
+    <p id="modalWord"></p>
+    <div class="stats-row">
+      <div class="stat"><div class="num" id="statPlayed">0</div><div class="lbl">Игр</div></div>
+      <div class="stat"><div class="num" id="statWinPct">0%</div><div class="lbl">Побед</div></div>
+      <div class="stat"><div class="num" id="statStreak">0</div><div class="lbl">Серия</div></div>
+      <div class="stat"><div class="num" id="statMax">0</div><div class="lbl">Рекорд</div></div>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn-share" id="btnShare">Поделиться</button>
+      <button class="btn-close" id="btnClose">Закрыть</button>
+    </div>
+    <div class="note" id="statsNote">Статистика хранится только в этой вкладке и сбросится при обновлении страницы.</div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   SÖZLE — ежедневная словесная головоломка (RU / TM)
+   Слово дня одинаково для всех игроков в течение суток
+   (детерминированный выбор по дате устройства).
+
+   ВАЖНО про туркменский словарь:
+   Список туркменских слов ниже собран с осторожностью, но
+   ДОЛЖЕН быть проверен носителем языка перед публикацией
+   (например, братом Ahmet) — см. комментарий у TM_WORDS.
+   ============================================================ */
+
+const WORD_LEN = 5;
+const MAX_TRIES = 6;
+
+const RU_WORDS = [
+  "ковер","песня","парта","слово","сокол","чайка","рынок","базар","народ","мираж",
+  "орден","театр","песок","якорь","полет","время","шапка","рубль","олень","огонь",
+  "пламя","книга","дверь","закон","вечер","голос","песец","арбуз","сосна","трава",
+  "слеза","вагон","отвар","рамка","кошка","мышка","крыша","школа","форма","норма",
+  "драма","запад","полюс","акула","игрок","каток","пирог","сироп","сумка","полка"
+].filter(w => [...w].length === WORD_LEN);
+
+// Список туркменских слов требует проверки носителем языка.
+const TM_WORDS = [
+  "kitap","bazar","gyzyl","dünýä","ýaşyl","çörek","bahar","kesel","halka","dükan",
+  "bagşy","talyp","nahar","ertir","agşam","deňiz","kömek","tomus","gazet","sagat","bilim"
+].filter(w => [...w].length === WORD_LEN);
+
+const RU_ROWS = [
+  ["й","ц","у","к","е","н","г","ш","щ","з","х"],
+  ["ф","ы","в","а","п","р","о","л","д","ж","э"],
+  ["ENTER","я","ч","с","м","и","т","ь","б","ю","BACK"]
+];
+const TM_ROWS = [
+  ["a","b","ç","d","e","ä","f","g","h","i"],
+  ["j","ž","k","l","m","n","ň","o","ö","p"],
+  ["ENTER","r","s","ş","t","u","ü","w","y","ý","z","BACK"]
+];
+
+const STR = {
+  ru: {
+    title: "Sözle", subtitle: "Слово дня",
+    win: "🎉 Верно!", lose: "😔 Слово было:",
+    statusWin: "Отлично! Угадано за {n}/6",
+    statusLose: "Не в этот раз",
+    tooShort: "Мало букв",
+    played:"Игр", winPct:"Побед", streak:"Серия", max:"Рекорд",
+    share:"Поделиться", close:"Закрыть",
+    note:"Статистика хранится только в этой вкладке и сбросится при обновлении страницы.",
+    sponsor:"Ваш бизнес — здесь. Место под баннер спонсора дня. Пишите @Yusupmur.",
+    ad:"Реклама",
+    rulesTitle:"Как играть",
+    rulesIntro:"Угадайте слово дня за 6 попыток. Каждая попытка — слово из 5 букв.",
+    rDescCorrect:"Буква на своём месте",
+    rDescPresent:"Буква есть в слове, но на другом месте",
+    rDescAbsent:"Такой буквы в слове нет",
+    startPlay:"Понятно, играть"
+  },
+  tm: {
+    title: "Sözle", subtitle: "Günüň sözi",
+    win: "🎉 Dogry!", lose: "😔 Söz şudy:",
+    statusWin: "Ajaýyp! {n}/6 synanyşykda",
+    statusLose: "Bu gezek däl",
+    tooShort: "Harp az",
+    played:"Oýun", winPct:"Ýeňiş", streak:"Yzygider", max:"Rekord",
+    share:"Paýlaş", close:"Ýap",
+    note:"Statistika diňe bu penjirede saklanýar we sahypa täzelenende ýitýär.",
+    sponsor:"Siziň işiňiz — şu ýerde. Gün sponsorynyň ýeri. @Yusupmur ýazyň.",
+    ad:"Mahabat",
+    rulesTitle:"Nädip oýnamaly",
+    rulesIntro:"6 synanyşykda günüň sözüni tapyň. Her synanyşyk — 5 harply söz.",
+    rDescCorrect:"Harp öz ýerinde",
+    rDescPresent:"Harp sözde bar, ýöne başga ýerde",
+    rDescAbsent:"Beýle harp sözde ýok",
+    startPlay:"Düşnükli, oýnaýyn"
+  }
+};
+
+let rulesShown = false;
+
+let lang = "ru";
+let answer = "";
+let guesses = [];
+let current = "";
+let finished = false;
+let stats = { played:0, wins:0, streak:0, max:0 };
+
+function seededIndex(len){
+  const d = new Date();
+  const key = d.getFullYear()*372 + d.getMonth()*31 + d.getDate(); // simple date seed
+  return key % len;
+}
+
+function pickAnswer(){
+  const list = lang === "ru" ? RU_WORDS : TM_WORDS;
+  return list[seededIndex(list.length)];
+}
+
+function resetGame(){
+  answer = pickAnswer();
+  guesses = [];
+  current = "";
+  finished = false;
+  render();
+}
+
+function render(){
+  const t = STR[lang];
+  document.getElementById("gameTitle").textContent = t.title;
+  document.getElementById("subtitle").textContent = t.subtitle;
+  document.getElementById("statsNote").textContent = t.note;
+  document.querySelector(".sponsor .txt").innerHTML = "<b>" + (lang==="ru" ? "Ваш бизнес — здесь." : "Siziň işiňiz — şu ýerde.") + "</b> " + (lang==="ru" ? "Место под баннер спонсора дня. Пишите @Yusupmur." : "Gün sponsorynyň ýeri. @Yusupmur ýazyň.");
+  document.querySelector(".sponsor .badge").textContent = t.ad;
+  document.getElementById("rulesTitle").textContent = t.rulesTitle;
+  document.getElementById("rulesIntro").textContent = t.rulesIntro;
+  document.getElementById("rDescCorrect").textContent = t.rDescCorrect;
+  document.getElementById("rDescPresent").textContent = t.rDescPresent;
+  document.getElementById("rDescAbsent").textContent = t.rDescAbsent;
+  document.getElementById("btnStartPlay").textContent = t.startPlay;
+  renderBoard();
+  renderKeyboard();
+}
+
+function renderBoard(){
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  for(let r=0; r<MAX_TRIES; r++){
+    const rowEl = document.createElement("div");
+    rowEl.className = "row";
+    rowEl.id = "row-"+r;
+    const word = guesses[r] ? guesses[r].word : (r === guesses.length ? current : "");
+    for(let c=0; c<WORD_LEN; c++){
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      const letter = word[c] || "";
+      tile.textContent = letter;
+      if(letter && !guesses[r]) tile.classList.add("filled");
+      if(guesses[r]){
+        tile.classList.add(guesses[r].result[c]);
+      }
+      rowEl.appendChild(tile);
+    }
+    board.appendChild(rowEl);
+  }
+}
+
+function keyStateMap(){
+  const map = {};
+  guesses.forEach(g=>{
+    g.word.split("").forEach((ch,i)=>{
+      const state = g.result[i];
+      const rank = {absent:0, present:1, correct:2};
+      if(!map[ch] || rank[state] > rank[map[ch]]) map[ch] = state;
+    });
+  });
+  return map;
+}
+
+function renderKeyboard(){
+  const kb = document.getElementById("keyboard");
+  kb.innerHTML = "";
+  const rows = lang === "ru" ? RU_ROWS : TM_ROWS;
+  const states = keyStateMap();
+  rows.forEach(rowKeys=>{
+    const rowEl = document.createElement("div");
+    rowEl.className = "krow";
+    rowKeys.forEach(k=>{
+      const btn = document.createElement("button");
+      btn.className = "key";
+      if(k === "ENTER" || k === "BACK") btn.classList.add("wide");
+      if(states[k]) btn.classList.add(states[k]);
+      btn.textContent = k === "ENTER" ? (lang==="ru"?"ВВОД":"GIR") : (k === "BACK" ? "⌫" : k);
+      btn.onclick = ()=> handleKey(k);
+      rowEl.appendChild(btn);
+    });
+    kb.appendChild(rowEl);
+  });
+}
+
+function setStatus(msg){
+  document.getElementById("status").textContent = msg;
+}
+
+function handleKey(k){
+  if(finished) return;
+  if(k === "ENTER"){ submitGuess(); return; }
+  if(k === "BACK"){ current = current.slice(0,-1); renderBoard(); return; }
+  if(current.length < WORD_LEN){
+    current += k.toLowerCase();
+    renderBoard();
+  }
+}
+
+function submitGuess(){
+  const t = STR[lang];
+  if(current.length < WORD_LEN){
+    setStatus(t.tooShort);
+    const rowEl = document.getElementById("row-"+guesses.length);
+    rowEl.classList.add("shake");
+    setTimeout(()=>rowEl.classList.remove("shake"), 400);
+    return;
+  }
+  const result = scoreGuess(current, answer);
+  guesses.push({word: current, result});
+  const won = current === answer;
+  const rowIdx = guesses.length - 1;
+  current = "";
+  renderBoard();
+  renderKeyboard();
+  const rowEl = document.getElementById("row-"+rowIdx);
+  Array.from(rowEl.children).forEach((tile,i)=>{
+    setTimeout(()=>{ tile.classList.add("flip"); }, i*80);
+  });
+
+  if(won){
+    finished = true;
+    setStatus(t.statusWin.replace("{n}", guesses.length));
+    updateStats(true);
+    setTimeout(()=>showModal(true), 700);
+  } else if(guesses.length >= MAX_TRIES){
+    finished = true;
+    setStatus(t.statusLose);
+    updateStats(false);
+    setTimeout(()=>showModal(false), 700);
+  } else {
+    setStatus("");
+  }
+}
+
+function scoreGuess(guess, ans){
+  const res = Array(WORD_LEN).fill("absent");
+  const ansArr = ans.split("");
+  const guessArr = guess.split("");
+  const used = Array(WORD_LEN).fill(false);
+  for(let i=0;i<WORD_LEN;i++){
+    if(guessArr[i] === ansArr[i]){ res[i]="correct"; used[i]=true; }
+  }
+  for(let i=0;i<WORD_LEN;i++){
+    if(res[i]==="correct") continue;
+    const idx = ansArr.findIndex((ch,j)=> ch===guessArr[i] && !used[j]);
+    if(idx !== -1){ res[i]="present"; used[idx]=true; }
+  }
+  return res;
+}
+
+function updateStats(won){
+  stats.played++;
+  if(won){ stats.wins++; stats.streak++; stats.max = Math.max(stats.max, stats.streak); }
+  else{ stats.streak = 0; }
+}
+
+function showModal(won){
+  const t = STR[lang];
+  document.getElementById("modalTitle").textContent = won ? t.win : t.lose;
+  document.getElementById("modalWord").textContent = won ? "" : (t.lose + " " + answer.toUpperCase());
+  document.getElementById("statPlayed").textContent = stats.played;
+  document.getElementById("statWinPct").textContent = stats.played ? Math.round(100*stats.wins/stats.played)+"%" : "0%";
+  document.getElementById("statStreak").textContent = stats.streak;
+  document.getElementById("statMax").textContent = stats.max;
+  document.querySelector(".stat:nth-child(1) .lbl").textContent = t.played;
+  document.querySelector(".stat:nth-child(2) .lbl").textContent = t.winPct;
+  document.querySelector(".stat:nth-child(3) .lbl").textContent = t.streak;
+  document.querySelector(".stat:nth-child(4) .lbl").textContent = t.max;
+  document.getElementById("btnShare").textContent = t.share;
+  document.getElementById("btnClose").textContent = t.close;
+  document.getElementById("modalBg").classList.add("show");
+}
+
+function buildShareText(){
+  const emoji = {correct:"🟩", present:"🟨", absent:"⬜"};
+  const lines = guesses.map(g => g.result.map(r=>emoji[r]).join(""));
+  const d = new Date();
+  const dateStr = d.getDate()+"."+(d.getMonth()+1)+"."+d.getFullYear();
+  return `Sözle ${dateStr} ${guesses.length}/${MAX_TRIES}\n\n` + lines.join("\n");
+}
+
+document.getElementById("btnShare").onclick = ()=>{
+  const text = buildShareText();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn = document.getElementById("btnShare");
+      const old = btn.textContent;
+      btn.textContent = lang==="ru" ? "Скопировано!" : "Göçürildi!";
+      setTimeout(()=> btn.textContent = old, 1400);
+    }).catch(()=>{ fallbackCopy(text); });
+  } else {
+    fallbackCopy(text);
+  }
+};
+function fallbackCopy(text){
+  const ta = document.createElement("textarea");
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); }catch(e){}
+  document.body.removeChild(ta);
+}
+
+document.getElementById("btnClose").onclick = ()=>{
+  document.getElementById("modalBg").classList.remove("show");
+};
+
+document.getElementById("btnRu").onclick = ()=> switchLang("ru");
+document.getElementById("btnTm").onclick = ()=> switchLang("tm");
+
+document.getElementById("btnHelp").onclick = ()=>{
+  document.getElementById("rulesBg").classList.add("show");
+};
+document.getElementById("btnStartPlay").onclick = ()=>{
+  document.getElementById("rulesBg").classList.remove("show");
+};
+
+function switchLang(l){
+  if(lang === l) return;
+  lang = l;
+  document.getElementById("btnRu").classList.toggle("active", l==="ru");
+  document.getElementById("btnTm").classList.toggle("active", l==="tm");
+  document.getElementById("modalBg").classList.remove("show");
+  resetGame();
+}
+
+window.addEventListener("keydown", (e)=>{
+  if(finished) return;
+  const key = e.key;
+  const allowedRu = "йцукенгшщзхфывапролджэячсмитьбю";
+  const allowedTm = "abçdeäfghijžklmnňoöprsştuüwyýz";
+  if(key === "Enter"){ handleKey("ENTER"); return; }
+  if(key === "Backspace"){ handleKey("BACK"); return; }
+  const k = key.toLowerCase();
+  if(k.length === 1){
+    if(lang==="ru" && allowedRu.includes(k)) handleKey(k);
+    if(lang==="tm" && allowedTm.includes(k)) handleKey(k);
+  }
+});
+
+resetGame();
+if(!rulesShown){
+  rulesShown = true;
+  document.getElementById("rulesBg").classList.add("show");
+}
+</script>
+</body>
+</html>
